@@ -49,8 +49,8 @@
 <body>
     <canvas id="canvas"></canvas>
     <div id="info">
-        <span id="fps">FPS: 30.0</span>
-        <span id="frametime">Frame time: 33.3ms</span>
+        <span id="fps">FPS: 1.0</span>
+        <span id="frametime">Frame time: 1000.0ms</span>
     </div>
     
     <script>
@@ -70,8 +70,8 @@
         // Pattern: black, white, black, white, blue, white (6 frames)
         const colors = ['black', 'white', 'black', 'white', 'blue', 'white'];
         let currentFrame = 0;
-        let targetFPS = 30;
-        let actualFPS = 30;
+        let targetFPS = 1;
+        let actualFPS = 1;
         let lastFrameTime = performance.now();
         let frameInterval = 1000 / targetFPS;
         let lastTime = performance.now();
@@ -122,11 +122,11 @@
             const halfHeight = window.innerHeight / 2;
             
             if (y < halfHeight) {
-                // Top half - increase speed
-                targetFPS = Math.min(120, targetFPS + 0.5);
+                // Top half - increase speed by 5%
+                targetFPS = Math.min(120, targetFPS * 1.05);
             } else {
-                // Bottom half - decrease speed
-                targetFPS = Math.max(1, targetFPS - 0.5);
+                // Bottom half - decrease speed by 5%
+                targetFPS = Math.max(0.1, targetFPS * 0.95);
             }
             
             frameInterval = 1000 / targetFPS;
