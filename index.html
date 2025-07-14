@@ -30,33 +30,14 @@
             justify-content: center;
         }
         
-        #pattern {
-            width: 100%;
-            height: 40vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .bar {
-            width: 8.33%;
-            height: 100%;
-            transition: none;
-        }
-        
-        #timer {
-            font-size: 15vw;
-            font-weight: bold;
-            font-family: monospace;
-            margin: 20px 0;
-            letter-spacing: -2px;
-        }
-        
         #millis {
-            font-size: 25vw;
+            font-size: 50vw;
             font-weight: bold;
             font-family: monospace;
-            letter-spacing: -5px;
+            letter-spacing: -0.1em;
+            width: 100%;
+            text-align: center;
+            line-height: 1;
         }
         
         #controls {
@@ -70,71 +51,25 @@
 </head>
 <body>
     <div id="container">
-        <div id="pattern">
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-        </div>
-        <div id="timer">00:00</div>
         <div id="millis">000</div>
         <div id="controls">Tap to start/stop</div>
     </div>
     
     <script>
-        const timerDisplay = document.getElementById('timer');
         const millisDisplay = document.getElementById('millis');
-        const bars = document.querySelectorAll('.bar');
         const container = document.getElementById('container');
         
         let startTime = null;
         let isRunning = false;
         let animationId = null;
         
-        // Create alternating black/white pattern
-        function updatePattern() {
-            const elapsed = isRunning ? Date.now() - startTime : 0;
-            const phase = Math.floor(elapsed / 100) % 12; // Change every 100ms
-            
-            bars.forEach((bar, index) => {
-                if (index === phase) {
-                    bar.style.background = 'white';
-                } else {
-                    bar.style.background = 'black';
-                }
-            });
-        }
-        
         function updateDisplay() {
-            if (!isRunning) {
-                updatePattern();
-                return;
-            }
+            if (!isRunning) return;
             
             const elapsed = Date.now() - startTime;
-            
-            // Calculate time components
-            const totalSeconds = Math.floor(elapsed / 1000);
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
             const millis = elapsed % 1000;
             
-            // Update displays
-            timerDisplay.textContent = 
-                String(minutes).padStart(2, '0') + ':' + 
-                String(seconds).padStart(2, '0');
             millisDisplay.textContent = String(millis).padStart(3, '0');
-            
-            // Update pattern
-            updatePattern();
             
             animationId = requestAnimationFrame(updateDisplay);
         }
@@ -160,9 +95,6 @@
             e.preventDefault();
             toggleTimer();
         });
-        
-        // Initialize pattern
-        updatePattern();
     </script>
 </body>
 </html>
