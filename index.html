@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Flash Pattern</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            touch-action: none;
+            font-family: Arial, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        #canvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        
+        #info {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #888;
+            font-size: 16px;
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+            background: rgba(128, 128, 128, 0.3);
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+        
+        #info span {
+            display: block;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="info">
+        <span id="fps">FPS: 30.0</span>
+        <span id="frametime">Frame time: 33.3ms</span>
+    </div>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const fpsDisplay = document.getElementById('fps');
+        const frametimeDisplay = document.getElementById('frametime');
+        
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Pattern: black, white, black, white, blue, white (6 frames)
+        const colors = ['black', 'white', 'black', 'white', 'blue', 'white'];
+        let currentFrame = 0;
+        let targetFPS = 30;
+        let actualFPS = 30;
+        let lastFrameTime = performance.now();
+        let frameInterval = 1000 / targetFPS;
+        let lastTime = performance.now();
+        
+        // FPS tracking
+        let frameCount = 0;
+        let fpsUpdateTime = performance.now();
+        
+        function drawFrame() {
+            const currentTime = performance.now();
+            const deltaTime = currentTime - lastFrameTime;
+            
+            if (deltaTime >= frameInterval) {
+                // Draw the current color
+                ctx.fillStyle = colors[currentFrame];
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Update frame index
+                currentFrame = (currentFrame + 1) % colors.length;
+                
+                // Update timing
+                lastFrameTime = currentTime - (deltaTime % frameInterval);
+                
+                // Update FPS counter
+                frameCount++;
+                if (currentTime - fpsUpdateTime >= 1000) {
+                    actualFPS = frameCount;
+                    frameCount = 0;
+                    fpsUpdateTime = currentTime;
+                    
+                    // Update display
+                    fpsDisplay.textContent = `FPS: ${targetFPS.toFixed(1)} (actual: ${actualFPS})`;
+                    frametimeDisplay.textContent = `Frame time: ${(1000 / targetFPS).toFixed(1)}ms`;
+                }
+            }
+            
+            requestAnimationFrame(drawFrame);
+        }
+        
+        // Touch handling
+        canvas.addEventListener('touchstart', handleTouch);
+        canvas.addEventListener('mousedown', handleTouch);
+        
+        function handleTouch(event) {
+            event.preventDefault();
+            
+            const y = event.touches ? event.touches[0].clientY : event.clientY;
+            const halfHeight = window.innerHeight / 2;
+            
+            if (y < halfHeight) {
+                // Top half - increase speed
+                targetFPS = Math.min(120, targetFPS + 0.5);
+            } else {
+                // Bottom half - decrease speed
+                targetFPS = Math.max(1, targetFPS - 0.5);
+            }
+            
+            frameInterval = 1000 / targetFPS;
+        }
+        
+        // Start animation
+        drawFrame();
+    </script>
+</body>
+</html>
