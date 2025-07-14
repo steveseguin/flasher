@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Flash Pattern</title>
+    <title>Visual Timer</title>
     <style>
         * {
             margin: 0;
@@ -17,123 +17,152 @@
             font-family: Arial, sans-serif;
             user-select: none;
             -webkit-user-select: none;
+            background: black;
+            color: white;
         }
         
-        #canvas {
+        #container {
             width: 100vw;
             height: 100vh;
-            display: block;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         
-        #info {
+        #pattern {
+            width: 100%;
+            height: 40vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .bar {
+            width: 8.33%;
+            height: 100%;
+            transition: none;
+        }
+        
+        #timer {
+            font-size: 15vw;
+            font-weight: bold;
+            font-family: monospace;
+            margin: 20px 0;
+            letter-spacing: -2px;
+        }
+        
+        #millis {
+            font-size: 25vw;
+            font-weight: bold;
+            font-family: monospace;
+            letter-spacing: -5px;
+        }
+        
+        #controls {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #888;
-            font-size: 16px;
+            bottom: 20px;
+            font-size: 14px;
             text-align: center;
-            pointer-events: none;
-            z-index: 10;
-            background: rgba(128, 128, 128, 0.3);
-            padding: 10px 20px;
-            border-radius: 5px;
-        }
-        
-        #info span {
-            display: block;
-            margin: 5px 0;
+            opacity: 0.5;
         }
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-    <div id="info">
-        <span id="fps">FPS: 1.0</span>
-        <span id="frametime">Frame time: 1000.0ms</span>
+    <div id="container">
+        <div id="pattern">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        <div id="timer">00:00</div>
+        <div id="millis">000</div>
+        <div id="controls">Tap to start/stop</div>
     </div>
     
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const fpsDisplay = document.getElementById('fps');
-        const frametimeDisplay = document.getElementById('frametime');
+        const timerDisplay = document.getElementById('timer');
+        const millisDisplay = document.getElementById('millis');
+        const bars = document.querySelectorAll('.bar');
+        const container = document.getElementById('container');
         
-        // Set canvas size
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
+        let startTime = null;
+        let isRunning = false;
+        let animationId = null;
         
-        // Pattern: black, white, black, white, blue, white (6 frames)
-        const colors = ['black', 'white', 'black', 'white', 'blue', 'white'];
-        let currentFrame = 0;
-        let targetFPS = 1;
-        let actualFPS = 1;
-        let lastFrameTime = performance.now();
-        let frameInterval = 1000 / targetFPS;
-        let lastTime = performance.now();
-        
-        // FPS tracking
-        let frameCount = 0;
-        let fpsUpdateTime = performance.now();
-        
-        function drawFrame() {
-            const currentTime = performance.now();
-            const deltaTime = currentTime - lastFrameTime;
+        // Create alternating black/white pattern
+        function updatePattern() {
+            const elapsed = isRunning ? Date.now() - startTime : 0;
+            const phase = Math.floor(elapsed / 100) % 12; // Change every 100ms
             
-            if (deltaTime >= frameInterval) {
-                // Draw the current color
-                ctx.fillStyle = colors[currentFrame];
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Update frame index
-                currentFrame = (currentFrame + 1) % colors.length;
-                
-                // Update timing
-                lastFrameTime = currentTime - (deltaTime % frameInterval);
-                
-                // Update FPS counter
-                frameCount++;
-                if (currentTime - fpsUpdateTime >= 1000) {
-                    actualFPS = frameCount;
-                    frameCount = 0;
-                    fpsUpdateTime = currentTime;
-                    
-                    // Update display
-                    fpsDisplay.textContent = `FPS: ${targetFPS.toFixed(1)} (actual: ${actualFPS})`;
-                    frametimeDisplay.textContent = `Frame time: ${(1000 / targetFPS).toFixed(1)}ms`;
+            bars.forEach((bar, index) => {
+                if (index === phase) {
+                    bar.style.background = 'white';
+                } else {
+                    bar.style.background = 'black';
                 }
+            });
+        }
+        
+        function updateDisplay() {
+            if (!isRunning) {
+                updatePattern();
+                return;
             }
             
-            requestAnimationFrame(drawFrame);
+            const elapsed = Date.now() - startTime;
+            
+            // Calculate time components
+            const totalSeconds = Math.floor(elapsed / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            const millis = elapsed % 1000;
+            
+            // Update displays
+            timerDisplay.textContent = 
+                String(minutes).padStart(2, '0') + ':' + 
+                String(seconds).padStart(2, '0');
+            millisDisplay.textContent = String(millis).padStart(3, '0');
+            
+            // Update pattern
+            updatePattern();
+            
+            animationId = requestAnimationFrame(updateDisplay);
+        }
+        
+        function toggleTimer() {
+            if (isRunning) {
+                // Stop
+                isRunning = false;
+                cancelAnimationFrame(animationId);
+                container.style.background = 'black';
+            } else {
+                // Start
+                startTime = Date.now();
+                isRunning = true;
+                container.style.background = '#111';
+                updateDisplay();
+            }
         }
         
         // Touch handling
-        canvas.addEventListener('touchstart', handleTouch);
-        canvas.addEventListener('mousedown', handleTouch);
+        container.addEventListener('click', toggleTimer);
+        container.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            toggleTimer();
+        });
         
-        function handleTouch(event) {
-            event.preventDefault();
-            
-            const y = event.touches ? event.touches[0].clientY : event.clientY;
-            const halfHeight = window.innerHeight / 2;
-            
-            if (y < halfHeight) {
-                // Top half - increase speed by 5%
-                targetFPS = Math.min(120, targetFPS * 1.05);
-            } else {
-                // Bottom half - decrease speed by 5%
-                targetFPS = Math.max(0.1, targetFPS * 0.95);
-            }
-            
-            frameInterval = 1000 / targetFPS;
-        }
-        
-        // Start animation
-        drawFrame();
+        // Initialize pattern
+        updatePattern();
     </script>
 </body>
 </html>
